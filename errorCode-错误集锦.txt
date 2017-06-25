@@ -1,0 +1,2 @@
+错误1：UnicodeDecodeError: 'ascii' codec can't decode byte 0xe6 in position 0: ordinal not in range(128)
+==>> 不能单单用顶上的注释

@@ -177,7 +177,7 @@ class CSDN_Blog_Spider:
                 isStop = False
             else:
                 locationList.append(location)
-        # 截取倒数第三次横杆出现前面的字符
+        # 截取倒数第三次横杆出现前面的字符，为了去掉CSDN标题上抓包自动出来“- 专栏  - 博客频道  - CSDN.NET”
         new_title = bs.title.string[:locationList[-3]]
         return new_title.strip()
 

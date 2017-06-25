@@ -1,4 +1,10 @@
 # -*- encoding: utf-8 -*-
+#coding=utf-8
+import sys
+default_encoding = 'utf-8'
+if sys.getdefaultencoding() != default_encoding:
+    reload(sys)
+    sys.setdefaultencoding(default_encoding)
 '''
 抓取个人博客列表，然后转成 md 文件保存， title是文件名
 参考：Created on 2014-09-18 21:10:39
@@ -12,7 +18,7 @@ import re
 from bs4 import BeautifulSoup
 import random
 import time
-
+import os
 
 class CSDN_Blog_Spider:
     def __init__(self, url):
@@ -48,27 +54,44 @@ class CSDN_Blog_Spider:
         req.add_header('User-Agent', agent)
         req.add_header('Host', 'blog.csdn.net')
         req.add_header('Accept', '*/*')
-        req.add_header('Referer', 'http://blog.csdn.net/mangoer_ys?viewmode=list')
+        req.add_header('Referer', 'http://blog.csdn.net/jjzhoujun2010?viewmode=list')
         req.add_header('GET', url)
         html = urllib2.urlopen(req)
-        page = html.read().decode('gbk', 'ignore').encode('utf-8')
+        # page = html.read().decode('gbk', 'ignore').encode('utf-8')
+        page = html.read().decode('utf-8')
 
         self.page = page
         self.title = self.getTitle()
         self.content = self.getContent()
-        self.saveFile()
+        # self.saveFile()
+        self.saveFileByTitle()
 
     def printInfo(self):
         print('文章标题是：   ' + self.title + '\n')
-        print('内容已经存储到out.txt文件中！')
+        print('内容已经存储到\"' + self.title + '.md\"文件中！')
 
+    #这是用正则表达式过滤出来的，也可以用BeautifulSoup过滤出来。
     def getTitle(self):
         rex = re.compile('<title>(.*?)</title>', re.DOTALL)
         match = rex.search(self.page)
         if match:
-            return match.group(1)
+            titleMore = match.group(1)
+            location = -1
+            locationList = []
+            isStop = True
+            while isStop:
+                location = titleMore.find('-', location + 1)
+                if location == -1:
+                    isStop = False
+                else:
+                    locationList.append(location)
+            # 截取倒数第三次横杆出现前面的字符，为了去掉CSDN标题上抓包自动出来“- 专栏  - 博客频道  - CSDN.NET”
+            title = titleMore[:locationList[-3]]
+            return title.strip()
 
         return 'NO TITLE'
+
+
 
     def getContent(self):
         bs = BeautifulSoup(self.page)
@@ -86,8 +109,11 @@ class CSDN_Blog_Spider:
         return content
 
     def saveFile(self):
-
         outfile = open('out.txt', 'a')
+        outfile.write(self.content)
+
+    def saveFileByTitle(self):
+        outfile = open(outDir + self.title + '.md', 'w')
         outfile.write(self.content)
 
     def getNextArticle(self):
@@ -128,6 +154,14 @@ class Scheduler:
 
 
 # url = input('请输入CSDN博文地址：')
-url = "http://blog.csdn.net/mangoer_ys/article/details/38427979"
+url = "http://blog.csdn.net/jjzhoujun2010/article/details/49521627"
+
+
+global outDir
+outDir = 'output/'
+if os.path.exists(outDir):
+    print 'Already exist, start to del.., but nothing to do'
+else:
+    os.mkdir(outDir)
 
 Scheduler(url).start()
